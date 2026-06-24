@@ -1,0 +1,76 @@
+# ---- OS / editor / tooling junk ----
+.DS_Store
+._*
+*.tmp
+*.temp
+*.swp
+*~
+*.bak
+*.bak.*
+~$*
+.~lock.*#
+__pycache__/
+.ipynb_checkpoints/
+.claude/
+
+# ---- Secrets ----
+.env
+.env.*
+*secret*
+*credentials*
+*.pem
+*.key
+*token*.json
+
+# ---- FERPA: student data (path-independent) ----
+**/03_Student_Data/
+**/Student Work/
+**/students.json
+**/*Roster*.xlsx
+**/*Roster*.xls
+**/*Roster*.csv
+**/*Participation*
+**/*Team_Assignments*
+**/*.csv
+**/*.xlsx
+**/*.xls
+**/Case Presentations*/
+**/past_evaluations/
+**/*Feedback*.md
+**/Peer Eval*/
+**/*Peer Evaluation*/
+
+# ---- HBP-licensed content ----
+**/Final HBS Cases/
+**/Final HBS Articles/
+**/Final Articles & Cases/
+**/Readings/
+**/Readings - Articles & Cases/
+**/*.pdf
+
+# ---- Heavy media: keep OUT of git forever (the 611 MB lesson) ----
+**/*.mp4
+**/*.mov
+**/*.m4a
+**/*.wav
+**/*.png
+**/*.jpg
+**/*.jpeg
+**/*Captions/
+**/*Caption*/
+**/HDD*/
+**/Slides/
+
+# ---- Tracker backups + scratch ----
+*.json.bak
+*.json.bak_*
+**/Delete/
+.backup.log
+
+# ---- Frozen term archives: kept on disk + cold storage, NOT version-controlled ----
+# Spring 2026 learnings already live in TeachingAssistant/knowledge and the old spring-2026 repo.
+/Spring 2026/
+**/*.mp3
+**/*.aac
+**/*.aiff
+.backup.log.launchd
