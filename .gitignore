@@ -74,3 +74,7 @@ __pycache__/
 **/*.aac
 **/*.aiff
 .backup.log.launchd
+
+# Prior-instance reference (student data + bulky): local only
+**/inputs/prior_reference/
+**/inputs/*.imscc
