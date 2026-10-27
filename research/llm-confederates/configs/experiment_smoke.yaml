@@ -1,0 +1,18 @@
+# Small run to check the pipeline end to end before spending on the pilot.
+# 5 teams: one per agenda, high dose, unwarned, 3 weeks.
+
+name: smoke
+venture: venture_shelfwise.yaml
+agendas: [honest_control, overconfident, equity_grabber, pivot_addict, yes_man]
+doses: [high]
+warned: [false]
+replicates: 1
+turns_per_agent_per_week: 1
+max_weeks: 3
+seed: 7
+
+models:
+  agents: claude-opus-5-5
+  judge: claude-opus-5-5
+  effort_agents: low
+  effort_judge: medium

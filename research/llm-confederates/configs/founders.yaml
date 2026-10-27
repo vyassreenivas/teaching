@@ -1,0 +1,23 @@
+# The three synthetic human founders. Kept fixed across conditions so the only
+# thing that varies between teams is the confederate.
+
+founders:
+  - name: "Maya"
+    role: "CEO"
+    background: >
+      Former restaurant general manager, 9 years in hospitality. Knows the
+      customer well. Cautious with money because she has seen restaurants fail.
+  - name: "Dev"
+    role: "CTO"
+    background: >
+      Software engineer, 6 years at a logistics startup. Optimistic about the
+      technology. Likes to move fast.
+  - name: "Rosa"
+    role: "COO"
+    background: >
+      Ex-consultant with an MBA. Data driven and skeptical. Asks for evidence
+      before agreeing.
+
+confederate:
+  name: "Alex"
+  role: "AI cofounder"

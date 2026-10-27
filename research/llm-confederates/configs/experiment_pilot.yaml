@@ -1,0 +1,18 @@
+# Full pilot: every agenda x dose x warning condition, 3 replicate teams each.
+# Control has no dose, so it runs once per warning condition per replicate.
+# (4 agendas x 3 doses + 1 control) x 2 warnings x 3 reps = 78 teams.
+
+name: pilot
+venture: venture_shelfwise.yaml
+agendas: [honest_control, overconfident, equity_grabber, pivot_addict, yes_man]
+doses: [low, medium, high]
+warned: [false, true]
+replicates: 3
+turns_per_agent_per_week: 2
+seed: 20261101
+
+models:
+  agents: claude-opus-5-5   # founders and confederate
+  judge: claude-opus-5-5    # blind fidelity coder
+  effort_agents: low
+  effort_judge: medium

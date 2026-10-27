@@ -1,0 +1,6 @@
+anthropic>=2.3.0
+pyyaml
+pandas
+matplotlib
+tabulate
+pytest
