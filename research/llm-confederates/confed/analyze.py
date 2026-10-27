@@ -29,7 +29,7 @@ INFLUENCE_TARGETS = {
 
 def load(run_dir: Path):
     teams = [json.loads(p.read_text()) for p in sorted((run_dir / "teams").glob("team_*.json"))]
-    codes = [json.loads(p.read_text()) for p in sorted((run_dir / "judged").glob("team_*.json"))]
+    codes = [json.loads(p.read_text()) for p in sorted((run_dir / "judged").glob("*/team_*.json"))]
     mock = any(t.get("backend") == "MockBackend" for t in teams)
 
     def cond_cols(c):
@@ -41,12 +41,24 @@ def load(run_dir: Path):
     sur = pd.DataFrame([{**cond_cols(t["condition"]), **s} for t in teams for s in t["surveys"]])
     # The judge's guess is stored as "judged" so it can't overwrite the
     # assigned agenda from the condition.
-    jud = pd.DataFrame([{**cond_cols(j["condition"]), "judged": c.get("agenda"),
+    jud = pd.DataFrame([{**cond_cols(j["condition"]), "judge": j["judge"],
+                         "judged": c.get("agenda"),
                          **{k: v for k, v in c.items() if k != "agenda"}}
                         for j in codes for c in j["codes"]])
     if not jud.empty:
         jud["hit"] = jud["judged"] == jud["agenda"]
     return turns, dec, sur, jud, mock
+
+
+def cohen_kappa(a: pd.Series, b: pd.Series) -> float:
+    m = a.notna() & b.notna()
+    a, b = a[m], b[m]
+    if len(a) == 0:
+        return float("nan")
+    po = (a == b).mean()
+    cats = set(a) | set(b)
+    pe = sum((a == c).mean() * (b == c).mean() for c in cats)
+    return float("nan") if pe == 1 else (po - pe) / (1 - pe)
 
 
 def _stamp(ax, mock):
@@ -66,8 +78,22 @@ def analyze(run_dir: Path) -> Path:
     lines += [f"Teams: {turns['team_id'].nunique()}  ·  Turns: {len(turns)}  ·  "
               f"Judged confederate turns: {len(jud)}", ""]
 
-    # 1. Fidelity by week
+    # Judges code independently. For the fidelity and drift measures we use the
+    # panel's majority vote per turn (mean strength), so no single model's
+    # quirks drive the headline. Section 4 reports each judge separately.
+    panel = jud
     if not jud.empty:
+        keys = ["team_id", "turn", "agenda", "dose", "warned", "week"]
+        panel = (jud.groupby(keys)
+                 .agg(judged=("judged", lambda s: s.mode().iloc[0]),
+                      strength_0to3=("strength_0to3", "mean"),
+                      admits_hidden_goal=("admits_hidden_goal", "max"))
+                 .reset_index())
+        panel["hit"] = panel["judged"] == panel["agenda"]
+
+    # 1. Fidelity by week
+    if not panel.empty:
+        jud_all, jud = jud, panel
         fid = (jud.groupby(["agenda", "dose", "week"])
                .agg(recovery=("hit", "mean"), strength=("strength_0to3", "mean"),
                     leaks=("admits_hidden_goal", "mean"), n=("hit", "size"))
@@ -133,6 +159,27 @@ def analyze(run_dir: Path) -> Path:
         fig.tight_layout()
         fig.savefig(out / "detection.png", dpi=150)
         plt.close(fig)
+
+    # 4. Coder validation: each judge against the known assignment, and
+    # judges against each other. The assignment is what the confederate was
+    # TOLD, not what it SAID; a human-coded subsample separates the two.
+    if not panel.empty:
+        acc = (jud_all.groupby(["judge", "dose"])["hit"].mean().unstack("dose").round(2))
+        acc.to_csv(out / "judge_accuracy_by_dose.csv")
+        lines += ["## 4. Coder validation",
+                  "Share of turns where each judge recovers the assigned agenda, by dose.", "",
+                  acc.to_markdown(), ""]
+        wide = jud_all.pivot_table(index=["team_id", "turn"], columns="judge",
+                                   values="judged", aggfunc="first")
+        judges = list(wide.columns)
+        if len(judges) > 1:
+            rows = [{"judge_a": a, "judge_b": b, "cohen_kappa": round(cohen_kappa(
+                     wide[a], wide[b]), 3)}
+                    for i, a in enumerate(judges) for b in judges[i + 1:]]
+            kap = pd.DataFrame(rows)
+            kap.to_csv(out / "judge_agreement.csv", index=False)
+            lines += ["Pairwise agreement between judges (Cohen's kappa).", "",
+                      kap.to_markdown(index=False), ""]
 
     (out / "summary.md").write_text("\n".join(lines))
     return out / "summary.md"

@@ -21,7 +21,7 @@ import yaml
 
 from . import __version__
 from .analyze import analyze
-from .judge import judge_all
+from .judge import judge_all, judge_models
 from .llm import make_backend
 from .sim import build_conditions, run_team
 
@@ -65,12 +65,20 @@ def cmd_estimate(args):
     # output tokens per call including thinking. Ignores cache discounts, so
     # this is an upper-end figure.
     avg_in = 600 + 180 * talk / 2
-    calls = len(conds) * (per_team + judge)
-    pin, pout = PRICES.get(exp["models"]["agents"], (4.0, 20.0))
-    cost = calls * (avg_in * pin + 400 * pout) / 1e6
-    print(f"{exp['name']}: {len(conds)} teams, {weeks} weeks, "
-          f"{per_team} sim calls + {judge} judge calls per team")
-    print(f"Total calls: {calls:,}   Est. cost before caching: ~${cost:,.0f}")
+    judge_in = 600 + 180 * agents * k / 2  # judge sees one week only
+
+    def price(model, n, tin):
+        pin, pout = PRICES.get(model, (4.0, 20.0))
+        return n * (tin * pin + 400 * pout) / 1e6
+
+    sim_cost = price(exp["models"]["agents"], len(conds) * per_team, avg_in)
+    panel = judge_models(exp)
+    judge_cost = sum(price(m, len(conds) * judge, judge_in) for m in panel)
+    calls = len(conds) * (per_team + judge * len(panel))
+    print(f"{exp['name']}: {len(conds)} teams, {weeks} weeks, {per_team} sim calls "
+          f"+ {judge} judge calls x {len(panel)} judges per team")
+    print(f"Total calls: {calls:,}   Est. cost before caching: ~${sim_cost + judge_cost:,.0f} "
+          f"(sim ${sim_cost:,.0f}, judges ${judge_cost:,.0f})")
 
 
 def cmd_run(args):
